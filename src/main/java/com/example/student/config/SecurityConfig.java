@@ -60,6 +60,8 @@ public class SecurityConfig {
                 .authenticationProvider(provider)
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
 
+
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/register", "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/students/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/students/**" ).hasRole("ADMIN")
@@ -122,12 +124,14 @@ public class SecurityConfig {
     }
 
 
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
+        // Your Vercel frontend domain (without /login)
         configuration.setAllowedOrigins(
-                List.of("https://student-management-frontend-h1vy.vercel.app/login")
+                List.of("https://student-management-frontend-h1vy.vercel.app")
         );
 
         configuration.setAllowedMethods(
@@ -135,8 +139,10 @@ public class SecurityConfig {
         );
 
         configuration.setAllowedHeaders(
-                List.of("Authorization", "Content-Type")
+                List.of("Authorization", "Content-Type", "Accept")
         );
+
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
@@ -145,5 +151,6 @@ public class SecurityConfig {
 
         return source;
     }
+
 
 }
