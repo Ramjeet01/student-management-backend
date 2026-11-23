@@ -1,3 +1,4 @@
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -31,3 +32,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment and secrets ###
+.env
+.env.*
+!.env.example
+
+### Docker ###
+.DS_Store
