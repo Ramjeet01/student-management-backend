@@ -56,7 +56,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, DaoAuthenticationProvider provider, JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authenticationProvider(provider)
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
 
@@ -127,7 +127,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of("https://student-management-frontend-h1vy.vercel.app/login")
         );
 
         configuration.setAllowedMethods(
