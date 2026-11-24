@@ -1,38 +1,63 @@
 
 package com.example.student.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${resend.api-key}")
+    private String apiKey;
 
-    @Value("${spring.mail.username}")
+    @Value("${resend.from-email}")
     private String senderEmail;
+
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public void sendOtpEmail(String recipientEmail, String otp) {
 
-        SimpleMailMessage message = new SimpleMailMessage();
+        String jsonBody = """
+                {
+                  "from": "%s",
+                  "to": ["%s"],
+                  "subject": "Student Management System - Password Reset OTP",
+                  "text": "Hello,\\n\\nYour password reset OTP is: %s\\n\\nThis OTP is valid for 5 minutes.\\nDo not share this OTP with anyone.\\n\\nIf you did not request a password reset, please ignore this email.\\n\\nStudent Management System"
+                }
+                """.formatted(senderEmail, recipientEmail, otp);
 
-        message.setFrom(senderEmail);
-        message.setTo(recipientEmail);
-        message.setSubject("Student Management System - Password Reset OTP");
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(
+                            jsonBody, StandardCharsets.UTF_8))
+                    .build();
 
-        message.setText(
-                "Hello,\n\n" +
-                        "Your password reset OTP is: " + otp + "\n\n" +
-                        "This OTP is valid for 5 minutes.\n" +
-                        "Do not share this OTP with anyone.\n\n" +
-                        "If you did not request a password reset, please ignore this email.\n\n" +
-                        "Student Management System"
-        );
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
 
-        mailSender.send(message);
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException(
+                        "Resend email failed: " + response.body()
+                );
+            }
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Email sending was interrupted.", e);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to send OTP email: " + e.getMessage(), e);
+        }
     }
 }
