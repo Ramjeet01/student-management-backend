@@ -59,11 +59,12 @@ public class AuthController {
     public Map<String, String> resetPassword(
             @RequestBody ResetPasswordRequest request) {
 
+        System.out.println("FORGOT PASSWORD CONTROLLER REACHED");
+
         String message = passwordResetService.resetPassword(
                 request.getEmail(),
                 request.getNewPassword()
         );
-
         return Map.of("message", message);
     }
 }
