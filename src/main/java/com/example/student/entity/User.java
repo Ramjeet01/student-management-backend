@@ -15,7 +15,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @Column(unique = true)
     private String username;
+
+    @Column(unique = true)
     private String password;
     private boolean enabled = true;
     private String role = "ROLE_USER";
