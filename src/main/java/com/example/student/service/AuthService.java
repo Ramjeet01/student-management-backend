@@ -16,24 +16,28 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public registerResponseDto register(registerRequestDto registerRequestDto) {
+
+    public registerResponseDto register(registerRequestDto request) {
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email is already registered");
+        }
 
         User user = new User();
 
-        user.setUsername(registerRequestDto.getUsername());
-        user.setPassword(
-                passwordEncoder.encode(registerRequestDto.getPassword())
-        );
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(true);
         user.setRole("ROLE_USER");
 
-        User resultedUser = userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        registerResponseDto registerResponseDto = new registerResponseDto();
+        registerResponseDto response = new registerResponseDto();
 
-        registerResponseDto.setUsername(resultedUser.getUsername());
-        registerResponseDto.setPassword(resultedUser.getPassword());
+        response.setUsername(savedUser.getUsername());
 
-        return registerResponseDto;
+        return response;
     }
+
 }
