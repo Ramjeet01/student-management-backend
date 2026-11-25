@@ -2,11 +2,11 @@
 package com.example.student.controller;
 
 import com.example.student.dto.registerRequestDto;
-import com.example.student.dto.registerResponseDto;
 import com.example.student.dto.ResetPasswordRequest;
-import com.example.student.service.AuthService;
+import com.example.student.service.RegistrationService;
 import com.example.student.service.PasswordResetService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.*;
@@ -18,18 +18,34 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    private final RegistrationService registrationService;
     private final PasswordResetService passwordResetService;
 
-    // Registration
+    // Start registration and send email OTP
     @PostMapping("/register")
-    public registerResponseDto registerUser(
-            @RequestBody registerRequestDto request) {
+    public Map<String, String> registerUser(
+            @Valid @RequestBody registerRequestDto request) {
 
-        return authService.register(request);
+        String message =
+                registrationService.startRegistration(request);
+
+        return Map.of("message", message);
     }
 
-    // Send OTP
+    // Verify registration OTP and create account
+    @PostMapping("/verify-registration")
+    public Map<String, String> verifyRegistration(
+            @RequestBody Map<String, String> request) {
+
+        String message = registrationService.verifyRegistration(
+                request.get("email"),
+                request.get("otp")
+        );
+
+        return Map.of("message", message);
+    }
+
+    // Forgot password - send OTP
     @PostMapping("/forgot-password")
     public Map<String, String> forgotPassword(
             @RequestBody Map<String, String> request) {
@@ -41,7 +57,7 @@ public class AuthController {
         return Map.of("message", message);
     }
 
-    // Verify OTP
+    // Verify password reset OTP
     @PostMapping("/verify-otp")
     public Map<String, String> verifyOtp(
             @RequestBody Map<String, String> request) {
@@ -57,14 +73,13 @@ public class AuthController {
     // Reset password
     @PostMapping("/reset-password")
     public Map<String, String> resetPassword(
-            @RequestBody ResetPasswordRequest request) {
-
-        System.out.println("FORGOT PASSWORD CONTROLLER REACHED");
+            @Valid@RequestBody ResetPasswordRequest request) {
 
         String message = passwordResetService.resetPassword(
                 request.getEmail(),
                 request.getNewPassword()
         );
+
         return Map.of("message", message);
     }
 }

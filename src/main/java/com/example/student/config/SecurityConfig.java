@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 "/auth/register",
+                                "/auth/verify-registration",
                                 "/auth/login",
                                 "/auth/forgot-password",
                                 "/auth/verify-otp",
