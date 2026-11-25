@@ -2,19 +2,19 @@
 package com.example.student.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // Password reset OTP
     public void sendOtpEmail(String recipientEmail, String otp) {
-
         String subject =
                 "Student Management System - Password Reset OTP";
 
@@ -29,9 +29,7 @@ public class EmailService {
         sendEmail(recipientEmail, subject, message);
     }
 
-    // Registration verification OTP
     public void sendRegistrationOtpEmail(String recipientEmail, String otp) {
-
         String subject =
                 "Student Management System - Email Verification";
 
@@ -47,13 +45,11 @@ public class EmailService {
         sendEmail(recipientEmail, subject, message);
     }
 
-    // Common Gmail SMTP email method
     private void sendEmail(
             String recipientEmail,
             String subject,
             String message
     ) {
-
         try {
             SimpleMailMessage mailMessage = new SimpleMailMessage();
 
@@ -63,7 +59,11 @@ public class EmailService {
 
             mailSender.send(mailMessage);
 
+            log.info("OTP email sent successfully to {}", recipientEmail);
+
         } catch (Exception e) {
+            log.error("Gmail SMTP failed while sending email to {}", recipientEmail, e);
+
             throw new RuntimeException(
                     "Unable to send email. Please try again later.", e
             );
