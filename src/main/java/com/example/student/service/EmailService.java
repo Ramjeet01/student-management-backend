@@ -1,25 +1,16 @@
 
 package com.example.student.service;
 
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
-    @Value("${resend.api-key}")
-    private String apiKey;
-
-    @Value("${resend.from-email}")
-    private String senderEmail;
-
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final JavaMailSender mailSender;
 
     // Password reset OTP
     public void sendOtpEmail(String recipientEmail, String otp) {
@@ -56,75 +47,26 @@ public class EmailService {
         sendEmail(recipientEmail, subject, message);
     }
 
-    // Common Resend email method
+    // Common Gmail SMTP email method
     private void sendEmail(
             String recipientEmail,
             String subject,
             String message
     ) {
 
-        String jsonBody = """
-                {
-                  "from": "%s",
-                  "to": ["%s"],
-                  "subject": "%s",
-                  "text": "%s"
-                }
-                """.formatted(
-                escapeJson(senderEmail),
-                escapeJson(recipientEmail),
-                escapeJson(subject),
-                escapeJson(message)
-        );
-
         try {
+            SimpleMailMessage mailMessage = new SimpleMailMessage();
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.resend.com/emails"))
-                    .header("Authorization", "Bearer " + apiKey)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(
-                            jsonBody,
-                            StandardCharsets.UTF_8
-                    ))
-                    .build();
+            mailMessage.setTo(recipientEmail);
+            mailMessage.setSubject(subject);
+            mailMessage.setText(message);
 
-            HttpResponse<String> response = httpClient.send(
-                    request,
-                    HttpResponse.BodyHandlers.ofString()
-            );
-
-            if (response.statusCode() < 200 ||
-                    response.statusCode() >= 300) {
-
-                throw new RuntimeException(
-                        "Resend email failed: " + response.body()
-                );
-            }
-
-        } catch (InterruptedException e) {
-
-            Thread.currentThread().interrupt();
-
-            throw new RuntimeException(
-                    "Email sending was interrupted.", e
-            );
+            mailSender.send(mailMessage);
 
         } catch (Exception e) {
-
             throw new RuntimeException(
-                    "Unable to send email: " + e.getMessage(), e
+                    "Unable to send email. Please try again later.", e
             );
         }
-    }
-
-    private String escapeJson(String value) {
-
-        return value
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
     }
 }
